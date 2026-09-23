@@ -49,6 +49,7 @@ mt32_t::mt32_t()
 
 mt32_t::~mt32_t()
 {
+    delete la32;
     delete mcu;
 }
 
