@@ -222,7 +222,9 @@ void mt32_t::push_midi()
 {
     if (uart_cycles == 0 || uart_cycles < mcu->total_cycles())
     {
+#ifndef NUKED_MT32_BAREMETAL
         midi_mutex.lock();
+#endif
         if (uart_buffer_s != uart_buffer_e)
         {
             uint8_t b = uart_buffer[uart_buffer_s];
@@ -233,18 +235,25 @@ void mt32_t::push_midi()
 
             uart_cycles = mcu->total_cycles() + 3840;
         }
+#ifndef NUKED_MT32_BAREMETAL
         midi_mutex.unlock();
+#endif
     }
 }
 
 void mt32_t::post_midi(uint8_t byte)
 {
+#ifndef NUKED_MT32_BAREMETAL
     midi_mutex.lock();
+#endif
 
     if ((uart_buffer_e + 1) % uart_buffer_size != uart_buffer_s)
     {
         uart_buffer[uart_buffer_e] = byte;
         uart_buffer_e = (uart_buffer_e + 1) % uart_buffer_size;
     }
+
+#ifndef NUKED_MT32_BAREMETAL
     midi_mutex.unlock();
+#endif
 }

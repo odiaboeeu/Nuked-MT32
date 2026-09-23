@@ -158,6 +158,7 @@ void mt32_t::lcd_write(uint8_t a, uint8_t data)
 }
 
 
+#ifndef NUKED_MT32_BAREMETAL
 static constexpr uint32_t lcd_col1 = 0xff18f2b3;
 static constexpr uint32_t lcd_col2 = 0xff30ad23;
 
@@ -237,3 +238,8 @@ void mt32_t::lcd_render()
         lcd_font_render(25, 25 + i * 40, lcd_data[i], cursor);
     }
 }
+#else
+void mt32_t::lcd_render()
+{
+}
+#endif

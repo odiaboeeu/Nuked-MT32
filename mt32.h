@@ -16,7 +16,9 @@
  */
 #pragma once
 #include <stdint.h>
+#ifndef NUKED_MT32_BAREMETAL
 #include <mutex>
+#endif
 
 class mcs96_device;
 class i8x9x_device;
@@ -92,7 +94,9 @@ private:
 
     void push_midi();
     
+#ifndef NUKED_MT32_BAREMETAL
     std::mutex midi_mutex;
+#endif
 
 
 public:
@@ -111,7 +115,9 @@ public:
     uint8_t rom[0x20000];
     uint8_t pcm[0x80000];
 
+#ifndef NUKED_MT32_BAREMETAL
     uint32_t lcd_buffer[lcd_h][lcd_w];
+#endif
 
     int16_t samples[8192][2];
 
