@@ -100,7 +100,12 @@ target_link_libraries(mt32-panelshot PRIVATE mt32core)
 add_executable(mt32-selftest tools/selftest.cpp)
 target_link_libraries(mt32-selftest PRIVATE mt32core)
 
+# --- Reverb SysEx observer unit test ----------------------------------------
+add_executable(mt32-reverb-observer-test tools/reverb_observer_test.cpp)
+target_link_libraries(mt32-reverb-observer-test PRIVATE mt32core)
+
 enable_testing()
+add_test(NAME reverb-observer COMMAND mt32-reverb-observer-test)
 if(DEFINED MT32_TEST_CONTROL_ROM AND DEFINED MT32_TEST_PCM_ROM)
     add_test(NAME selftest
              COMMAND mt32-selftest ${MT32_TEST_CONTROL_ROM} ${MT32_TEST_PCM_ROM})

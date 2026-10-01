@@ -70,33 +70,104 @@ void Mt32Reverb::observeMidiByte(uint8_t b)
     if (locked_)
         return;
 
-    if (b == 0xf0) { sx_state_ = IN_SYSEX; sx_len_ = 0; return; }
-    if (sx_state_ != IN_SYSEX) return;
+    auto reset = [this]() {
+        sx_state_ = IDLE;
+        sx_header_len_ = 0;
+        sx_pending_valid_ = false;
+        sx_pending_ = 0;
+        sx_sum_ = 0;
+        sx_data_len_ = 0;
+        sx_reverb_mask_ = 0;
+    };
 
-    if (b == 0xf7) {
-        // Roland MT-32 DT1: 41 <dev> 16 12 <a1 a2 a3> <data...>
-        // System area 10 00 01 = reverb mode, 02 = time, 03 = level.
-        if (sx_len_ >= 8 && sx_[0] == 0x41 && sx_[2] == 0x16 && sx_[3] == 0x12 &&
-            sx_[4] == 0x10 && sx_[5] == 0x00) {
-            int addr = sx_[6];
-            int n = sx_len_ - 7 - 1;          // minus address bytes and checksum
-            for (int i = 0; i < n && addr + i <= 0x03; i++) {
-                int v = sx_[7 + i] & 0x7f;
-                switch (addr + i) {
-                case 0x01: setMode(v); break;
-                case 0x02: setParameters(v, level_); break;
-                case 0x03: setParameters(time_, v); break;
-                default: break;
-                }
-            }
-        }
-        sx_state_ = IDLE; sx_len_ = 0;
+    if (b == 0xf0) {
+        reset();
+        sx_state_ = IN_SYSEX;
         return;
     }
 
-    if (b & 0x80) { sx_state_ = IDLE; sx_len_ = 0; return; }   // aborted
-    if (sx_len_ < int(sizeof sx_))
-        sx_[sx_len_++] = b;
+    if (sx_state_ != IN_SYSEX)
+        return;
+
+    if (b == 0xf7) {
+        // Roland MT-32 DT1:
+        // 41 <dev> 16 12 <a1 a2 a3> <data...> <checksum>
+        //
+        // The observer deliberately remains device-ID agnostic because the
+        // Unit Number selected by the emulated firmware is not exposed here.
+        const bool valid_header =
+            sx_header_len_ == 7 &&
+            sx_header_[0] == 0x41 &&
+            sx_header_[2] == 0x16 &&
+            sx_header_[3] == 0x12;
+
+        const bool valid_checksum =
+            sx_pending_valid_ &&
+            ((sx_sum_ + sx_pending_) & 0x7f) == 0;
+
+        if (valid_header && valid_checksum) {
+            int new_mode = mode_;
+            int new_time = time_;
+            int new_level = level_;
+
+            if (sx_reverb_mask_ & 0x01)
+                new_mode = sx_reverb_values_[0];
+            if (sx_reverb_mask_ & 0x02)
+                new_time = sx_reverb_values_[1];
+            if (sx_reverb_mask_ & 0x04)
+                new_level = sx_reverb_values_[2];
+
+            if (sx_reverb_mask_ & 0x01)
+                setMode(new_mode);
+
+            if (sx_reverb_mask_ & 0x06)
+                setParameters(new_time, new_level);
+        }
+
+        reset();
+        return;
+    }
+
+    if (b & 0x80) {
+        reset();
+        return;
+    }
+
+    if (sx_header_len_ < 7) {
+        sx_header_[sx_header_len_++] = b;
+
+        if (sx_header_len_ == 7)
+            sx_sum_ = sx_header_[4] + sx_header_[5] + sx_header_[6];
+
+        return;
+    }
+
+    // Keep one byte pending. When another byte arrives, the previous one is
+    // known to be data. At F7, the remaining pending byte is the checksum.
+    if (sx_pending_valid_) {
+        const uint8_t data = sx_pending_;
+        const uint32_t address =
+            (uint32_t(sx_header_[4]) << 14) |
+            (uint32_t(sx_header_[5]) << 7) |
+            uint32_t(sx_header_[6]);
+
+        const uint32_t data_address = address + sx_data_len_;
+
+        sx_sum_ += data;
+
+        if (data_address >= 0x040001 && data_address <= 0x040003) {
+            const unsigned int index =
+                static_cast<unsigned int>(data_address - 0x040001);
+
+            sx_reverb_values_[index] = data & 0x7f;
+            sx_reverb_mask_ |= uint8_t(1u << index);
+        }
+
+        ++sx_data_len_;
+    }
+
+    sx_pending_ = b;
+    sx_pending_valid_ = true;
 }
 
 void Mt32Reverb::process(int16_t *frames, int count)

@@ -53,8 +53,15 @@ private:
     int mode_ = 0, time_ = 5, level_ = 3;
     bool locked_ = false;
 
-    // SysEx sniffer state
+    // Incremental SysEx sniffer state. The final byte before F7 is retained
+    // as the checksum, so complete DT1 messages do not need to be buffered.
     enum { IDLE, IN_SYSEX } sx_state_ = IDLE;
-    uint8_t sx_[16];
-    int sx_len_ = 0;
+    uint8_t sx_header_[7] = {};
+    int sx_header_len_ = 0;
+    bool sx_pending_valid_ = false;
+    uint8_t sx_pending_ = 0;
+    uint32_t sx_sum_ = 0;
+    uint32_t sx_data_len_ = 0;
+    uint8_t sx_reverb_values_[3] = {};
+    uint8_t sx_reverb_mask_ = 0;
 };
