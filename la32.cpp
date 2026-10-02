@@ -1170,10 +1170,18 @@ void la32_t::clock(uint32_t samples)
             }
         }
 
+        // Routes 2 and 3 form the complete dry output.
         int32_t s_l = accum[oddeven][2] + accum[oddeven][3];
         int32_t s_r = accum[oddeven][6] + accum[oddeven][7];
+
+        // Route 2 contains only partials with Reverb Switch enabled.
+        int32_t reverb_l = accum[oddeven][2];
+        int32_t reverb_r = accum[oddeven][6];
+
         s_l *= 3;
         s_r *= 3;
+        reverb_l *= 3;
+        reverb_r *= 3;
 
         if (s_l < -32768)
             s_l = -32768;
@@ -1184,8 +1192,19 @@ void la32_t::clock(uint32_t samples)
         else if (s_r > 32767)
             s_r = 32767;
 
+        if (reverb_l < -32768)
+            reverb_l = -32768;
+        else if (reverb_l > 32767)
+            reverb_l = 32767;
+        if (reverb_r < -32768)
+            reverb_r = -32768;
+        else if (reverb_r > 32767)
+            reverb_r = 32767;
+
         mt32->samples[sample_dst][0] = s_l;
         mt32->samples[sample_dst][1] = s_r;
+        mt32->reverb_input[sample_dst][0] = reverb_l;
+        mt32->reverb_input[sample_dst][1] = reverb_r;
 
         sample_dst++;
 

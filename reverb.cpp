@@ -170,10 +170,14 @@ void Mt32Reverb::observeMidiByte(uint8_t b)
     sx_pending_valid_ = true;
 }
 
-void Mt32Reverb::process(int16_t *frames, int count)
+void Mt32Reverb::process(
+    int16_t *frames,
+    const int16_t *reverbInputFrames,
+    int count
+)
 {
     BReverbModel *m = static_cast<BReverbModel *>(models_[mode_]);
-    if (!m) return;
+    if (!m || !frames || !reverbInputFrames || count <= 0) return;
 
     static std::vector<int16_t> il, ir, ol, orr;
     if (int(il.size()) < MAX_CHUNK) { il.resize(MAX_CHUNK); ir.resize(MAX_CHUNK);
@@ -185,16 +189,20 @@ void Mt32Reverb::process(int16_t *frames, int count)
         if (n > MAX_CHUNK) n = MAX_CHUNK;
 
         for (int i = 0; i < n; i++) {
-            il[i] = frames[(done + i) * 2];
-            ir[i] = frames[(done + i) * 2 + 1];
+            il[i] = reverbInputFrames[(done + i) * 2];
+            ir[i] = reverbInputFrames[(done + i) * 2 + 1];
         }
 
         if (m->process(il.data(), ir.data(), ol.data(), orr.data(), MT32Emu::Bit32u(n))) {
             // Dry plus wet, saturating - the reverb chip sits alongside the
             // DAC output rather than replacing it.
             for (int i = 0; i < n; i++) {
-                int32_t l = int32_t(il[i]) + int32_t(ol[i]);
-                int32_t r = int32_t(ir[i]) + int32_t(orr[i]);
+                int32_t l =
+                    int32_t(frames[(done + i) * 2]) +
+                    int32_t(ol[i]);
+                int32_t r =
+                    int32_t(frames[(done + i) * 2 + 1]) +
+                    int32_t(orr[i]);
                 if (l < -32768) l = -32768; if (l > 32767) l = 32767;
                 if (r < -32768) r = -32768; if (r > 32767) r = 32767;
                 frames[(done + i) * 2]     = int16_t(l);

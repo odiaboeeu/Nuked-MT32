@@ -41,8 +41,13 @@ public:
     // Ignored while settings are locked by the command line.
     void observeMidiByte(uint8_t b);
 
-    // In-place over interleaved stereo int16 frames.
-    void process(int16_t *frames, int count);
+    // Adds wet output to dry interleaved stereo frames. The reverb input
+    // contains only LA32 partials whose Reverb Switch is enabled.
+    void process(
+        int16_t *frames,
+        const int16_t *reverbInputFrames,
+        int count
+    );
 
     int mode()  const { return mode_; }
     int time()  const { return time_; }

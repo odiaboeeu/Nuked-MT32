@@ -43,7 +43,11 @@ static void mt32_callback(void *, Uint8 *stream, int len)
     const int frames = len / 4; // stereo, 16-bit
     mt32.clock(frames);
     if (reverb_enabled)
-        reverb.process(&mt32.samples[0][0], frames);
+        reverb.process(
+            &mt32.samples[0][0],
+            &mt32.reverb_input[0][0],
+            frames
+        );
     if (dc_block_enabled)
         dc_blocker.process(&mt32.samples[0][0], frames);
     memcpy(stream, mt32.samples, size_t(len));

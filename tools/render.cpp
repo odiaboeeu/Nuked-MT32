@@ -373,7 +373,11 @@ int main(int argc, char **argv)
 
         mt32.clock(n);
         if (reverb_on)
-            reverb.process(&mt32.samples[0][0], int(n));
+            reverb.process(
+                &mt32.samples[0][0],
+                &mt32.reverb_input[0][0],
+                int(n)
+            );
         if (dc_block)
             dc.process(&mt32.samples[0][0], int(n));
         fwrite(mt32.samples, 4, n, out);

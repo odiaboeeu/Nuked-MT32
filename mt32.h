@@ -121,6 +121,9 @@ public:
 
     int16_t samples[8192][2];
 
+    // LA32 route 2 only: partials with Reverb Switch enabled.
+    int16_t reverb_input[8192][2];
+
     void clock(uint64_t samples);
     void post_midi(uint8_t byte);
 
