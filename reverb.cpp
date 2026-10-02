@@ -90,6 +90,23 @@ void Mt32Reverb::observeMidiByte(uint8_t b)
         return;
 
     if (b == 0xf7) {
+        // The MT-32 special reset has no three-byte address or checksum:
+        // F0 41 <device> 16 12 7F 01 F7.
+        const bool special_reset =
+            sx_header_len_ == 6 &&
+            sx_header_[0] == 0x41 &&
+            sx_header_[2] == 0x16 &&
+            sx_header_[3] == 0x12 &&
+            sx_header_[4] == 0x7f &&
+            sx_header_[5] == 0x01;
+
+        if (special_reset) {
+            setMode(0);
+            setParameters(5, 3);
+            reset();
+            return;
+        }
+
         // Roland MT-32 DT1:
         // 41 <dev> 16 12 <a1 a2 a3> <data...> <checksum>
         //
