@@ -262,8 +262,8 @@ int main()
         );
 
         check(
-            stateIs(reverb, 1, 4, 5),
-            "observer remains device-ID agnostic"
+            stateIs(reverb, 0, 5, 3),
+            "DT1 with wrong Device ID is rejected"
         );
     }
 
@@ -398,6 +398,52 @@ int main()
             "special reset restores mode 0, time 5 and level 3"
         );
     }
+    {
+        Mt32Reverb reverb;
+
+        reverb.setDeviceID(0x1f);
+
+        send(
+            reverb,
+            makeDt1(
+                0x1f,
+                {0x10, 0x00, 0x01},
+                {0x01, 0x04, 0x05}
+            )
+        );
+
+        check(
+            stateIs(reverb, 1, 4, 5),
+            "configured Device ID is accepted"
+        );
+    }
+
+    {
+        Mt32Reverb reverb;
+
+        send(
+            reverb,
+            makeDt1(
+                0x10,
+                {0x10, 0x00, 0x01},
+                {0x02, 0x06, 0x07}
+            )
+        );
+
+        send(
+            reverb,
+            {
+                0xf0, 0x41, 0x1f, 0x16,
+                0x12, 0x7f, 0x01, 0xf7
+            }
+        );
+
+        check(
+            stateIs(reverb, 2, 6, 7),
+            "special reset with wrong Device ID is rejected"
+        );
+    }
+
     std::printf("\n%d check(s) failed.\n", failures);
 
     if (failures == 0)

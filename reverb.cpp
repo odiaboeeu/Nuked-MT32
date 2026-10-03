@@ -95,6 +95,7 @@ void Mt32Reverb::observeMidiByte(uint8_t b)
         const bool special_reset =
             sx_header_len_ == 6 &&
             sx_header_[0] == 0x41 &&
+            sx_header_[1] == device_id_ &&
             sx_header_[2] == 0x16 &&
             sx_header_[3] == 0x12 &&
             sx_header_[4] == 0x7f &&
@@ -110,11 +111,12 @@ void Mt32Reverb::observeMidiByte(uint8_t b)
         // Roland MT-32 DT1:
         // 41 <dev> 16 12 <a1 a2 a3> <data...> <checksum>
         //
-        // The observer deliberately remains device-ID agnostic because the
-        // Unit Number selected by the emulated firmware is not exposed here.
+        // The default Device ID is 0x10, corresponding to the MT-32 default
+        // Unit Number 17. Frontends may override it with setDeviceID().
         const bool valid_header =
             sx_header_len_ == 7 &&
             sx_header_[0] == 0x41 &&
+            sx_header_[1] == device_id_ &&
             sx_header_[2] == 0x16 &&
             sx_header_[3] == 0x12;
 

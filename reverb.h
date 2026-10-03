@@ -35,6 +35,10 @@ public:
     void init();                       // allocate the four mode models
     void setMode(int mode);            // 0 room, 1 hall, 2 plate, 3 tap delay
     void setParameters(int time, int level);   // each 0-7
+    void setDeviceID(uint8_t deviceID)
+    {
+        device_id_ = deviceID & 0x1f;
+    }
     void lockSettings(bool locked) { locked_ = locked; }
 
     // Feed every MIDI byte here so reverb settings track the song.
@@ -56,6 +60,7 @@ public:
 private:
     void *models_[4] = {nullptr, nullptr, nullptr, nullptr};
     int mode_ = 0, time_ = 5, level_ = 3;
+    uint8_t device_id_ = 0x10;
     bool locked_ = false;
 
     // Incremental SysEx sniffer state. The final byte before F7 is retained
