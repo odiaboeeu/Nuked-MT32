@@ -70,6 +70,11 @@ void Mt32Reverb::observeMidiByte(uint8_t b)
     if (locked_)
         return;
 
+    // System Real-Time messages may be interleaved anywhere in the MIDI
+    // stream, including inside SysEx, without terminating the message.
+    if (b >= 0xf8)
+        return;
+
     auto reset = [this]() {
         sx_state_ = IDLE;
         sx_header_len_ = 0;
