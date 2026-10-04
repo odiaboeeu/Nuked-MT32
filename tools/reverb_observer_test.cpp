@@ -669,6 +669,88 @@ int main()
         }
     }
 
+    {
+        struct PartialReverbCase {
+            const char *description;
+            std::vector<uint8_t> address;
+            std::vector<uint8_t> data;
+            int expected_mode;
+            int expected_time;
+            int expected_level;
+        };
+
+        const PartialReverbCase cases[] = {
+            {
+                "single-byte DT1 updates only reverb mode",
+                {0x10, 0x00, 0x01},
+                {0x01},
+                1, 6, 7
+            },
+            {
+                "single-byte DT1 updates only reverb time",
+                {0x10, 0x00, 0x02},
+                {0x04},
+                2, 4, 7
+            },
+            {
+                "single-byte DT1 updates only reverb level",
+                {0x10, 0x00, 0x03},
+                {0x05},
+                2, 6, 5
+            },
+            {
+                "two-byte DT1 updates time and level",
+                {0x10, 0x00, 0x02},
+                {0x04, 0x05},
+                2, 4, 5
+            },
+            {
+                "DT1 crossing into reverb updates all three parameters",
+                {0x10, 0x00, 0x00},
+                {0x40, 0x03, 0x07, 0x06},
+                3, 7, 6
+            },
+            {
+                "DT1 past reverb level does not wrap into other parameters",
+                {0x10, 0x00, 0x03},
+                {0x05, 0x7f, 0x7f},
+                2, 6, 5
+            }
+        };
+
+        for (const PartialReverbCase &test_case : cases) {
+            Mt32Reverb reverb;
+
+            send(
+                reverb,
+                makeDt1(
+                    0x10,
+                    {0x10, 0x00, 0x01},
+                    {0x02, 0x06, 0x07}
+                )
+            );
+
+            send(
+                reverb,
+                makeDt1(
+                    0x10,
+                    test_case.address,
+                    test_case.data
+                )
+            );
+
+            check(
+                stateIs(
+                    reverb,
+                    test_case.expected_mode,
+                    test_case.expected_time,
+                    test_case.expected_level
+                ),
+                test_case.description
+            );
+        }
+    }
+
     std::printf("\n%d check(s) failed.\n", failures);
 
     if (failures == 0)
