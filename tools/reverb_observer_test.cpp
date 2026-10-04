@@ -592,6 +592,83 @@ int main()
         );
     }
 
+    {
+        struct ReverbClampCase {
+            const char *description;
+            uint8_t sent_mode;
+            uint8_t sent_time;
+            uint8_t sent_level;
+            int expected_mode;
+            int expected_time;
+            int expected_level;
+        };
+
+        const ReverbClampCase cases[] = {
+            {
+                "reverb mode 4 is clamped to 3",
+                4, 6, 7,
+                3, 6, 7
+            },
+            {
+                "reverb mode 7 is clamped to 3",
+                7, 6, 7,
+                3, 6, 7
+            },
+            {
+                "reverb mode 127 is clamped to 3",
+                127, 6, 7,
+                3, 6, 7
+            },
+            {
+                "reverb time 8 is clamped to 7",
+                2, 8, 7,
+                2, 7, 7
+            },
+            {
+                "reverb time 127 is clamped to 7",
+                2, 127, 7,
+                2, 7, 7
+            },
+            {
+                "reverb level 8 is clamped to 7",
+                2, 6, 8,
+                2, 6, 7
+            },
+            {
+                "reverb level 127 is clamped to 7",
+                2, 6, 127,
+                2, 6, 7
+            }
+        };
+
+        for (const ReverbClampCase &test_case : cases) {
+            Mt32Reverb reverb;
+
+            send(
+                reverb,
+                makeDt1(
+                    0x10,
+                    {0x10, 0x00, 0x01},
+                    {
+                        test_case.sent_mode,
+                        test_case.sent_time,
+                        test_case.sent_level
+                    }
+                )
+            );
+
+            check(
+                stateIs(
+                    reverb,
+                    test_case.expected_mode,
+                    test_case.expected_time,
+                    test_case.expected_level
+                ),
+                test_case.description
+            );
+        }
+    }
+
     std::printf("\n%d check(s) failed.\n", failures);
 
     if (failures == 0)
