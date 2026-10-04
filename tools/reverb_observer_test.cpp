@@ -508,6 +508,90 @@ int main()
         );
     }
 
+    {
+        const uint8_t system_common_statuses[] = {
+            0xf1,
+            0xf2,
+            0xf3,
+            0xf4,
+            0xf5,
+            0xf6
+        };
+
+        for (uint8_t status : system_common_statuses) {
+            Mt32Reverb reverb;
+
+            const std::vector<uint8_t> interrupted = {
+                0xf0,
+                0x41,
+                0x10,
+                0x16,
+                0x12,
+                0x10,
+                0x00,
+                0x01,
+                0x03,
+                status,
+                0x07,
+                0x06,
+                0x70,
+                0xf7
+            };
+
+            send(reverb, interrupted);
+
+            char description[96];
+            std::snprintf(
+                description,
+                sizeof(description),
+                "System Common status %02X aborts an in-progress SysEx",
+                unsigned(status)
+            );
+
+            check(
+                stateIs(reverb, 0, 5, 3),
+                description
+            );
+        }
+    }
+
+    {
+        Mt32Reverb reverb;
+
+        send(
+            reverb,
+            {
+                0xf0,
+                0x41,
+                0x10,
+                0x16,
+                0x12,
+                0x10,
+                0x00,
+                0x01,
+                0x03,
+                0xf2,
+                0x00,
+                0x00,
+                0xf7
+            }
+        );
+
+        send(
+            reverb,
+            makeDt1(
+                0x10,
+                {0x10, 0x00, 0x01},
+                {0x02, 0x06, 0x07}
+            )
+        );
+
+        check(
+            stateIs(reverb, 2, 6, 7),
+            "new F0 recovers after System Common abort"
+        );
+    }
+
     std::printf("\n%d check(s) failed.\n", failures);
 
     if (failures == 0)
