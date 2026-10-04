@@ -751,6 +751,59 @@ int main()
         }
     }
 
+    {
+        struct AdjacentReverbCase {
+            const char *description;
+            std::vector<uint8_t> address;
+            std::vector<uint8_t> data;
+        };
+
+        const AdjacentReverbCase cases[] = {
+            {
+                "DT1 ending before reverb mode leaves state unchanged",
+                {0x10, 0x00, 0x00},
+                {0x7f}
+            },
+            {
+                "single-byte DT1 after reverb level leaves state unchanged",
+                {0x10, 0x00, 0x04},
+                {0x7f}
+            },
+            {
+                "multi-byte DT1 after reverb level leaves state unchanged",
+                {0x10, 0x00, 0x04},
+                {0x7f, 0x00, 0x7f, 0x00}
+            }
+        };
+
+        for (const AdjacentReverbCase &test_case : cases) {
+            Mt32Reverb reverb;
+
+            send(
+                reverb,
+                makeDt1(
+                    0x10,
+                    {0x10, 0x00, 0x01},
+                    {0x02, 0x06, 0x07}
+                )
+            );
+
+            send(
+                reverb,
+                makeDt1(
+                    0x10,
+                    test_case.address,
+                    test_case.data
+                )
+            );
+
+            check(
+                stateIs(reverb, 2, 6, 7),
+                test_case.description
+            );
+        }
+    }
+
     std::printf("\n%d check(s) failed.\n", failures);
 
     if (failures == 0)
