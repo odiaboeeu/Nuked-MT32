@@ -999,6 +999,98 @@ int main()
         );
     }
 
+    {
+        struct DeviceIdCase {
+            const char *description;
+            uint8_t configured_id;
+            uint8_t message_id;
+            bool expected_acceptance;
+        };
+
+        const DeviceIdCase cases[] = {
+            {
+                "configured Device ID 0 accepts matching DT1",
+                0x00, 0x00, true
+            },
+            {
+                "configured Device ID 0 rejects Device ID 16",
+                0x00, 0x10, false
+            },
+            {
+                "configured Device ID 31 accepts matching DT1",
+                0x1f, 0x1f, true
+            },
+            {
+                "configured Device ID 31 rejects Device ID 127",
+                0x1f, 0x7f, false
+            },
+            {
+                "default Device ID rejects Device ID 0",
+                0x10, 0x00, false
+            },
+            {
+                "default Device ID rejects Device ID 31",
+                0x10, 0x1f, false
+            },
+            {
+                "default Device ID rejects Device ID 127",
+                0x10, 0x7f, false
+            }
+        };
+
+        for (const DeviceIdCase &test_case : cases) {
+            Mt32Reverb reverb;
+            reverb.setDeviceID(test_case.configured_id);
+
+            send(
+                reverb,
+                makeDt1(
+                    test_case.message_id,
+                    {0x10, 0x00, 0x01},
+                    {0x01, 0x04, 0x05}
+                )
+            );
+
+            if (test_case.expected_acceptance) {
+                check(
+                    stateIs(reverb, 1, 4, 5),
+                    test_case.description
+                );
+            } else {
+                check(
+                    stateIs(reverb, 0, 5, 3),
+                    test_case.description
+                );
+            }
+        }
+    }
+
+    {
+        Mt32Reverb reverb;
+
+        send(
+            reverb,
+            makeDt1(
+                0x10,
+                {0x10, 0x00, 0x01},
+                {0x02, 0x06, 0x07}
+            )
+        );
+
+        send(
+            reverb,
+            {
+                0xf0, 0x41, 0x7f, 0x16,
+                0x12, 0x7f, 0x01, 0xf7
+            }
+        );
+
+        check(
+            stateIs(reverb, 2, 6, 7),
+            "Device ID 127 does not broadcast special reset"
+        );
+    }
+
     std::printf("\n%d check(s) failed.\n", failures);
 
     if (failures == 0)
