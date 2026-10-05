@@ -885,6 +885,120 @@ int main()
         );
     }
 
+    {
+        struct HeaderCase {
+            const char *description;
+            uint8_t manufacturer;
+            uint8_t model;
+            uint8_t command;
+        };
+
+        const HeaderCase cases[] = {
+            {
+                "DT1 with wrong Manufacturer ID is rejected",
+                0x42, 0x16, 0x12
+            },
+            {
+                "DT1 with wrong Model ID is rejected",
+                0x41, 0x17, 0x12
+            },
+            {
+                "DT1 with wrong Command ID is rejected",
+                0x41, 0x16, 0x13
+            }
+        };
+
+        for (const HeaderCase &test_case : cases) {
+            Mt32Reverb reverb;
+
+            send(
+                reverb,
+                makeDt1(
+                    0x10,
+                    {0x10, 0x00, 0x01},
+                    {0x02, 0x06, 0x07}
+                )
+            );
+
+            send(
+                reverb,
+                {
+                    0xf0,
+                    test_case.manufacturer,
+                    0x10,
+                    test_case.model,
+                    test_case.command,
+                    0x10,
+                    0x00,
+                    0x01,
+                    0x01,
+                    0x04,
+                    0x05,
+                    0x65,
+                    0xf7
+                }
+            );
+
+            check(
+                stateIs(reverb, 2, 6, 7),
+                test_case.description
+            );
+        }
+    }
+
+    {
+        Mt32Reverb reverb;
+
+        send(
+            reverb,
+            makeDt1(
+                0x10,
+                {0x10, 0x00, 0x01},
+                {0x02, 0x06, 0x07}
+            )
+        );
+
+        send(
+            reverb,
+            {
+                0xf0, 0x41, 0x10, 0x17,
+                0x12, 0x7f, 0x01, 0xf7
+            }
+        );
+
+        check(
+            stateIs(reverb, 2, 6, 7),
+            "special reset with wrong Model ID is rejected"
+        );
+
+        send(
+            reverb,
+            {
+                0xf0, 0x41, 0x10, 0x16,
+                0x13, 0x7f, 0x01, 0xf7
+            }
+        );
+
+        check(
+            stateIs(reverb, 2, 6, 7),
+            "special reset with wrong Command ID is rejected"
+        );
+
+        send(
+            reverb,
+            makeDt1(
+                0x10,
+                {0x10, 0x00, 0x01},
+                {0x01, 0x04, 0x05}
+            )
+        );
+
+        check(
+            stateIs(reverb, 1, 4, 5),
+            "valid DT1 recovers after invalid header messages"
+        );
+    }
+
     std::printf("\n%d check(s) failed.\n", failures);
 
     if (failures == 0)
