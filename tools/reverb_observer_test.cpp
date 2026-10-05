@@ -804,6 +804,87 @@ int main()
         }
     }
 
+    {
+        Mt32Reverb reverb;
+
+        send(
+            reverb,
+            makeDt1(
+                0x10,
+                {0x10, 0x00, 0x01},
+                {0x02, 0x06, 0x07}
+            )
+        );
+
+        send(
+            reverb,
+            {
+                0xf0,
+                0x41,
+                0x10,
+                0x16,
+                0x12,
+                0x10,
+                0x00,
+                0x01,
+                0x6f,
+                0xf7
+            }
+        );
+
+        check(
+            stateIs(reverb, 2, 6, 7),
+            "zero-data DT1 with valid checksum leaves state unchanged"
+        );
+    }
+
+    {
+        Mt32Reverb reverb;
+
+        send(
+            reverb,
+            makeDt1(
+                0x10,
+                {0x10, 0x00, 0x01},
+                {0x02, 0x06, 0x07}
+            )
+        );
+
+        send(
+            reverb,
+            {
+                0xf0,
+                0x41,
+                0x10,
+                0x16,
+                0x12,
+                0x10,
+                0x00,
+                0x01,
+                0xf7
+            }
+        );
+
+        check(
+            stateIs(reverb, 2, 6, 7),
+            "DT1 with complete address but no checksum is ignored"
+        );
+
+        send(
+            reverb,
+            makeDt1(
+                0x10,
+                {0x10, 0x00, 0x01},
+                {0x01, 0x04, 0x05}
+            )
+        );
+
+        check(
+            stateIs(reverb, 1, 4, 5),
+            "valid DT1 recovers after missing-checksum message"
+        );
+    }
+
     std::printf("\n%d check(s) failed.\n", failures);
 
     if (failures == 0)
