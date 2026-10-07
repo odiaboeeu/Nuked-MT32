@@ -4,7 +4,7 @@
 
 // 0: maximum speed, slightly lower accuracy. 1: maximum accuracy.
 #ifndef MT32EMU_BOSS_REVERB_PRECISE_MODE
-#define MT32EMU_BOSS_REVERB_PRECISE_MODE 0
+#define MT32EMU_BOSS_REVERB_PRECISE_MODE 1
 #endif
 
 namespace MT32Emu {
