@@ -29,7 +29,7 @@
 
 class Mt32Reverb {
 public:
-    Mt32Reverb();
+    explicit Mt32Reverb(bool oldMT32 = true);
     ~Mt32Reverb();
 
     void init();                       // allocate the four mode models
@@ -58,6 +58,7 @@ public:
     int level() const { return level_; }
 
 private:
+    const bool old_mt32_;
     void *models_[4] = {nullptr, nullptr, nullptr, nullptr};
     int mode_ = 0, time_ = 5, level_ = 3;
     uint8_t device_id_ = 0x10;

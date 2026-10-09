@@ -339,7 +339,7 @@ int main(int argc, char **argv)
     wav_header(out, total);
 
     DcBlocker dc;
-    Mt32Reverb reverb;
+    Mt32Reverb reverb(mt32.old_machine);
     if (reverb_on) {
         reverb.init();
         if (rv_mode >= 0) reverb.setMode(rv_mode);

@@ -96,7 +96,10 @@ int main(int argc, char **argv)
     // 1. Boot splash.
     run(0.05);
     std::string splash = lcd();
-    check(splash.find("Roland MT-32") != std::string::npos,
+    const char *expectedSplash = mt32.old_machine
+        ? "Roland MT-32"
+        : "****  Roland  ****";
+    check(splash.find(expectedSplash) != std::string::npos,
           "boot splash on LCD", splash);
 
     // 2. Idle display.

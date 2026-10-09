@@ -24,7 +24,7 @@ using MT32Emu::ReverbMode;
 
 static constexpr int MAX_CHUNK = 1024;
 
-Mt32Reverb::Mt32Reverb() {}
+Mt32Reverb::Mt32Reverb(bool oldMT32) : old_mt32_(oldMT32) {}
 
 Mt32Reverb::~Mt32Reverb()
 {
@@ -36,9 +36,9 @@ void Mt32Reverb::init()
 {
     for (int i = 0; i < 4; i++) {
         if (models_[i]) continue;
-        // mt32CompatibleModel = true: the MT-32's reverb, not the CM-32L's.
+        // Munt compatibility: true selects OLD; false selects NEW-generation settings.
         BReverbModel *m = BReverbModel::createBReverbModel(
-            ReverbMode(i), true, MT32Emu::RendererType_BIT16S);
+            ReverbMode(i), old_mt32_, MT32Emu::RendererType_BIT16S);
         m->open();
         m->setParameters(uint8_t(time_), uint8_t(level_));
         models_[i] = m;
