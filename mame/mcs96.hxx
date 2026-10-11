@@ -68,7 +68,10 @@ void mcs96_device::shr_immed_or_reg_2w_full()
 		OP1 = reg_r8(OP1) & 0x1f;
 	}
 	TMP = reg_r16(OP2);
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xffff >> (OP1 <= 16 ? 17-OP1 : 0))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && OP1 <= 16 && (TMP & (0x0001 << (OP1-1))))
@@ -90,7 +93,10 @@ void mcs96_device::shl_immed_or_reg_2w_full()
 		OP1 = reg_r8(OP1) & 0x1f;
 	}
 	TMP = reg_r16(OP2);
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xffff << (OP1 <= 16 ? 17-OP1 : 0))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && OP1 <= 16 && (TMP & (0x8000 >> (OP1-1))))
@@ -112,7 +118,10 @@ void mcs96_device::shra_immed_or_reg_2w_full()
 		OP1 = reg_r8(OP1) & 0x1f;
 	}
 	TMP = reg_r16(OP2);
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xffff >> (OP1 <= 16 ? 17-OP1 : 0))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && OP1 <= 16 && (TMP & (0x0001 << (OP1-1))))
@@ -136,7 +145,10 @@ void mcs96_device::shrl_immed_or_reg_2w_full()
 	OP2 &= 0xfc;
 	TMP = reg_r16(OP2);
 	TMP |= reg_r16(OP2+2) << 16;
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xffffffff >> (33-OP1))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && (TMP & (0x00000001 << (OP1-1))))
@@ -161,7 +173,10 @@ void mcs96_device::shll_immed_or_reg_2w_full()
 	OP2 &= 0xfc;
 	TMP = reg_r16(OP2);
 	TMP |= reg_r16(OP2+2) << 16;
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xffffffff << (33-OP1))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && (TMP & (0x80000000 >> (OP1-1))))
@@ -186,7 +201,10 @@ void mcs96_device::shral_immed_or_reg_2w_full()
 	OP2 &= 0xfc;
 	TMP = reg_r16(OP2);
 	TMP |= reg_r16(OP2+2) << 16;
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xffffffff >> (33-OP1))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && (TMP & (0x00000001 << (OP1-1))))
@@ -282,7 +300,10 @@ void mcs96_device::shrb_immed_or_reg_2b_full()
 		OP1 = reg_r8(OP1) & 0x1f;
 	}
 	TMP = reg_r8(OP2);
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xff >> (OP1 <= 8 ? 9-OP1 : 0))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && OP1 <= 8 && (TMP & (0x01 << (OP1-1))))
@@ -304,7 +325,10 @@ void mcs96_device::shlb_immed_or_reg_2b_full()
 		OP1 = reg_r8(OP1) & 0x1f;
 	}
 	TMP = reg_r8(OP2);
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xff << (OP1 <= 8 ? 9-OP1 : 0))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && OP1 <= 8 && (TMP & (0x80 >> (OP1-1))))
@@ -326,7 +350,10 @@ void mcs96_device::shrab_immed_or_reg_2b_full()
 		OP1 = reg_r8(OP1) & 0x1f;
 	}
 	TMP = reg_r8(OP2);
-	PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
+	if (mt32->old_machine && OP1 == 0)
+		PSW &= ~(F_Z|F_N|F_C|F_V);
+	else
+		PSW &= ~(F_Z|F_N|F_C|F_V|F_ST);
 	if(OP1 >= 2 && (TMP & (0xff >> (OP1 <= 8 ? 9-OP1 : 0))))
 		PSW |= F_ST;
 	if(OP1 >= 1 && OP1 <= 8 && (TMP & (0x01 << (OP1-1))))
