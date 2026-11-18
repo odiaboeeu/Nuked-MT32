@@ -21,6 +21,7 @@
 #include <string.h>
 #include "la32.h"
 #include "mt32.h"
+#include "rv2.h"
 #include "mame/emu.h"
 #include "mame/i8x9x.h"
 
@@ -296,15 +297,25 @@ static uint32_t calc_pow(uint32_t v)
     return (p << hi) >> 9; // (p << hi) >> 9 (p << 6) >> (15 - hi)
 }
 
+static int16_t output_expand(int16_t sample)
+{
+    return (sample & 0x8000) |
+           ((sample << 1) & 0x7ffe) |
+           ((sample >> 14) & 1);
+}
+
 void la32_t::clock(uint32_t samples)
 {
     uint64_t cycles = la32_cycles + 256 * samples;
     uint32_t sample_dst = 0;
+
+    mt32->rv2->sync();
+
     while (la32_cycles < cycles)
     {
         int16_t output[8] = {};
 
-        memset(accum, 0, sizeof(accum)); // TEMP
+        memset(accum[oddeven], 0, sizeof(accum[0])); // TEMP
 
         for (uint32_t i = 0; i < 32; i++)
         {
@@ -1165,6 +1176,21 @@ void la32_t::clock(uint32_t samples)
 
             la32_cycles += 8;
 
+            if (i == 4)
+            {
+                mt32->rv2->set_input(
+                    output_expand(accum[oddeven ^ 1][6])
+                );
+            }
+            else if (i == 20)
+            {
+                mt32->rv2->set_input(
+                    output_expand(accum[oddeven ^ 1][2])
+                );
+            }
+
+            mt32->rv2->clock(8);
+
             //if (i == 15 || i == 31 || sync_cpu)
             {
                 mt32->mcu->clock((la32_cycles * 375) >> 8);
@@ -1174,17 +1200,18 @@ void la32_t::clock(uint32_t samples)
             }
         }
 
-        // Routes 2 and 3 form the complete dry output.
-        int32_t s_l = accum[oddeven][2] + accum[oddeven][3];
-        int32_t s_r = accum[oddeven][6] + accum[oddeven][7];
-        // Route 2 contains only partials with Reverb Switch enabled.
-        int32_t reverb_l = accum[oddeven][2];
-        int32_t reverb_r = accum[oddeven][6];
+        int16_t reverb[2];
+        mt32->rv2->get_samples(reverb);
 
-        s_l *= 2;
-        s_r *= 2;
-        reverb_l *= 3;
-        reverb_r *= 3;
+        int32_t s_l =
+            output_expand(accum[oddeven][2]) +
+            output_expand(accum[oddeven][3]) +
+            reverb[1] * 17 / 25;
+
+        int32_t s_r =
+            output_expand(accum[oddeven][6]) +
+            output_expand(accum[oddeven][7]) +
+            reverb[0] * 17 / 25;
 
         if (s_l < -32768)
             s_l = -32768;
@@ -1195,19 +1222,11 @@ void la32_t::clock(uint32_t samples)
         else if (s_r > 32767)
             s_r = 32767;
 
-        if (reverb_l < -32768)
-            reverb_l = -32768;
-        else if (reverb_l > 32767)
-            reverb_l = 32767;
-        if (reverb_r < -32768)
-            reverb_r = -32768;
-        else if (reverb_r > 32767)
-            reverb_r = 32767;
 
         mt32->samples[sample_dst][0] = s_l;
         mt32->samples[sample_dst][1] = s_r;
-        mt32->reverb_input[sample_dst][0] = reverb_l;
-        mt32->reverb_input[sample_dst][1] = reverb_r;
+        mt32->reverb_input[sample_dst][0] = 0;
+        mt32->reverb_input[sample_dst][1] = 0;
 
         sample_dst++;
 
