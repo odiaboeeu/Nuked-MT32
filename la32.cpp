@@ -1228,7 +1228,10 @@ void la32_t::clock(uint32_t samples)
             output_expand(accum[oddeven ^ 1][7]) +
             reverb[0] * 17 / 25;
 
-        int32_t vol = 255 - mt32->mcu->pwm_value();
+        // Diagnostic: OLD 1.xx PWM behavior is not yet validated.
+        int32_t vol = mt32->old_machine
+            ? 255
+            : 255 - mt32->mcu->pwm_value();
 
         s_l = s_l * vol / 255;
         s_r = s_r * vol / 255;
