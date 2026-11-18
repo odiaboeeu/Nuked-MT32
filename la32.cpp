@@ -1202,10 +1202,14 @@ void la32_t::clock(uint32_t samples)
 
         for (int i = 0; i < 8; i++)
         {
-            if (accum[oddeven ^ 1][i] < -32768)
-                accum[oddeven ^ 1][i] = -32768;
-            else if (accum[oddeven ^ 1][i] > 32767)
-                accum[oddeven ^ 1][i] = 32767;
+            int32_t v = accum[oddeven][i];
+
+            if (v > 32767)
+                v = 32767;
+            else if (v < -32768)
+                v = -32768;
+
+            accum[oddeven][i] = v;
         }
 
         int16_t reverb[2];
